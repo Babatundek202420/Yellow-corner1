@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Yellow Corner Cafeteria — Order Chat</title>
+<meta name="description" content="Order food from Yellow Corner Cafeteria, Ajayi Crowther University, Oyo. Choose pickup or delivery and get your receipt with payment details.">
+<meta name="theme-color" content="#141110">
+<meta property="og:title" content="Yellow Corner Cafeteria — Order Chat">
+<meta property="og:description" content="Nourishing minds, spreading smiles. Order online for pickup or delivery.">
+<link rel="icon" type="image/png" href="logo.png">
+<link rel="apple-touch-icon" href="logo.png">
+<style>
+  :root{
+    --yc-yellow:#FFC72C;
+    --yc-black:#141110;
+    --yc-red:#C0392B;
+    --yc-cream:#FFF6E0;
+    box-sizing:border-box;
+    padding-top:env(safe-area-inset-top,0px);
+    padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  html{scroll-padding-top:env(safe-area-inset-top,0px);}
+  *{box-sizing:border-box;}
+  html,body{height:100%;margin:0;}
+  body{
+    font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+    background:#000 url('background.jpg') center/cover no-repeat fixed;
+    display:flex;align-items:center;justify-content:center;
+    padding:20px;
+    position:relative;
+  }
+  body::before{
+    content:"";
+    position:fixed;inset:0;
+    background:rgba(10,8,6,0.38);
+    z-index:0;
+  }
+
+  .splash{
+    position:relative;z-index:1;
+    display:flex;flex-direction:column;align-items:center;
+    text-align:center;color:var(--yc-yellow);
+    gap:10px;padding:20px;
+  }
+  .splash-logo{
+    width:170px;height:170px;object-fit:contain;
+    filter:drop-shadow(0 10px 25px rgba(0,0,0,0.5));
+  }
+  .splash h1{
+    font-size:24px;margin:6px 0 0;color:#fff;
+    text-shadow:0 2px 10px rgba(0,0,0,0.6);
+  }
+  .splash p{
+    font-size:14px;margin:0;color:var(--yc-yellow);
+    text-shadow:0 2px 8px rgba(0,0,0,0.6);
+  }
+  .splash button{
+    margin-top:18px;background:var(--yc-yellow);color:var(--yc-black);
+    border:2px solid var(--yc-black);border-radius:24px;
+    padding:13px 34px;font-size:15px;font-weight:800;
+    cursor:pointer;font-family:inherit;
+    box-shadow:0 8px 20px rgba(0,0,0,0.35);
+  }
+  .splash button:active{transform:scale(0.97);}
+
+  .chat{
+    position:relative;z-index:1;
+    width:100%;max-width:400px;
+    height:min(86vh,720px);
+    background:var(--yc-cream);
+    border-radius:22px;
+    border:3px solid var(--yc-black);
+    box-shadow:0 20px 50px rgba(0,0,0,0.45);
+    display:flex;flex-direction:column;
+    overflow:hidden;
+  }
+
+  .chat-head{
+    background:var(--yc-black);
+    color:var(--yc-yellow);
+    padding:12px 16px;
+    display:flex;align-items:center;gap:14px;
+    border-bottom:3px solid var(--yc-yellow);
+  }
+  .chat-head .avatar{
+    width:68px;height:68px;
+    display:flex;align-items:center;justify-content:center;
+    flex:0 0 68px;
+  }
+  .chat-head .avatar img{
+    width:100%;height:100%;
+    object-fit:contain;object-position:center;
+    display:block;
+  }
+  .chat-head h1{font-size:16px;margin:0;line-height:1.2;}
+  .chat-head p{margin:2px 0 0;font-size:11.5px;color:#ddd;display:flex;align-items:center;gap:5px;}
+  .dot{width:7px;height:7px;border-radius:50%;background:#4CD964;display:inline-block;}
+
+  .messages{
+    flex:1;overflow-y:auto;
+    padding:16px 14px;
+    display:flex;flex-direction:column;gap:10px;
+    background:
+      repeating-linear-gradient(0deg,transparent,transparent 39px,rgba(0,0,0,0.02) 40px);
+  }
+  .msg{max-width:80%;padding:10px 13px;border-radius:16px;font-size:14px;line-height:1.42;animation:pop .18s ease;}
+  @keyframes pop{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
+  .msg.bot{
+    align-self:flex-start;background:var(--yc-black);color:var(--yc-yellow);
+    border-bottom-left-radius:4px;
+  }
+  .msg.user{
+    align-self:flex-end;background:var(--yc-yellow);color:var(--yc-black);
+    border-bottom-right-radius:4px;font-weight:600;
+  }
+  .msg.system{
+    align-self:center;background:transparent;color:#7a6a52;font-size:12px;
+    text-align:center;max-width:90%;
+  }
+
+  .menu-grid{
+    display:grid;grid-template-columns:1fr 1fr;gap:8px;
+    align-self:stretch;margin:2px 0;
+  }
+  .menu-card{
+    background:#fff;border:2px solid var(--yc-black);border-radius:12px;
+    padding:8px 9px;text-align:left;cursor:pointer;font-family:inherit;
+  }
+  .menu-card:active{transform:scale(0.97);}
+  .menu-card b{display:block;font-size:13px;color:var(--yc-black);}
+
+  .chips{display:flex;flex-wrap:wrap;gap:7px;align-self:flex-start;max-width:92%;}
+  .chip{
+    background:#fff;border:2px solid var(--yc-black);border-radius:20px;
+    padding:7px 13px;font-size:12.5px;font-weight:700;color:var(--yc-black);
+    cursor:pointer;font-family:inherit;
+  }
+  .chip:active{background:var(--yc-yellow);}
+
+  .cart-bar{
+    background:var(--yc-black);color:var(--yc-yellow);
+    padding:9px 14px;font-size:13px;font-weight:700;
+    display:flex;justify-content:flex-start;align-items:center;
+    border-top:2px solid var(--yc-yellow);
+    line-height:1.45;
+  }
+  .cart-bar span{display:block;width:100%;white-space:normal;}
+  .cart-bar span.total{color:#fff;}
+
+  .input-row{
+    display:flex;gap:8px;padding:10px;background:#fff;
+    border-top:3px solid var(--yc-black);
+  }
+  .input-row input{
+    flex:1;border:2px solid var(--yc-black);border-radius:20px;
+    padding:9px 14px;font-size:14px;outline:none;font-family:inherit;
+  }
+  .input-row input:focus{border-color:var(--yc-red);}
+  .input-row button{
+    white-space:nowrap;
+    background:var(--yc-red);color:#fff;border:none;border-radius:20px;
+    padding:0 18px;font-weight:800;font-size:13px;cursor:pointer;font-family:inherit;
+  }
+  .input-row button:active{opacity:0.85;}
+
+  .receipt{
+    align-self:stretch;background:#fff;color:var(--yc-black);
+    border:2px dashed var(--yc-black);border-radius:10px;
+    padding:14px;font-size:13px;line-height:1.4;animation:pop .18s ease;
+  }
+  .receipt h3{margin:0;text-align:center;font-size:15px;}
+  .r-sub{text-align:center;font-size:11.5px;color:#6b5d45;margin-top:3px;}
+  .r-line{border-top:1px dashed #b9a97f;margin:9px 0;}
+  .r-row{display:flex;justify-content:space-between;gap:12px;margin:3px 0;}
+  .r-row span:last-child{text-align:right;font-weight:700;}
+  .r-total{font-size:15px;}
+  .r-addr{max-width:60%;word-break:break-word;}
+  .r-pay{background:var(--yc-cream);border-radius:8px;padding:9px 11px;font-size:12.5px;}
+  .r-acct{font-size:20px;font-weight:800;letter-spacing:1.5px;margin:4px 0;color:var(--yc-red);}
+
+  .messages::-webkit-scrollbar{width:5px;}
+  .messages::-webkit-scrollbar-thumb{background:#d8c79a;border-radius:3px;}
+
+  @media (max-width:420px){
+    .chat{height:100vh;height:100dvh;border-radius:0;border:none;max-width:100%;}
+    body{padding:0;}
+  }
+</style>
+</head>
+<body>
+
+<div class="splash" id="splash">
+  <h1>Yellow Corner Cafeteria</h1>
+  <p>Nourishing minds, spreading smiles</p>
+  <button id="startBtn">Start Order</button>
+</div>
+
+<div class="chat" id="chatWindow" style="display:none;">
+  <div class="chat-head">
+    <div class="avatar"><img src="logo.png" alt="Yellow Corner Cafeteria logo"></div>
+    <div>
+      <h1>Yellow Corner Cafeteria</h1>
+      <p><span class="dot"></span> Nourishing minds, spreading smiles</p>
+    </div>
+  </div>
+
+  <div class="messages" id="messages"></div>
+
+  <div class="cart-bar">
+    <span id="cartCount">Your order: empty</span>
+  </div>
+
+  <div class="input-row">
+    <input id="textInput" type="text" placeholder="Type a message…" autocomplete="off">
+    <button id="checkoutBtn">Checkout</button>
+  </div>
+</div>
+
+<script>
+const MENU = [
+  {id:'jollof_rice', name:'Jollof Rice', price:300},
+  {id:'fried_rice', name:'Fried Rice', price:300},
+  {id:'white_rice', name:'White Rice', price:300},
+  {id:'ofada_rice', name:'Ofada Rice', price:300},
+  {id:'spaghetti', name:'Spaghetti', price:300},
+  {id:'beans', name:'Beans', price:300},
+  {id:'yam_egg_sauce', name:'Yam And Egg Sauce', price:300},
+  {id:'yam_porridge', name:'Yam Porridge', price:300},
+  {id:'bread', name:'Bread', price:400},
+  {id:'moi_moi', name:'Moi Moi', price:300},
+  {id:'plantain', name:'Plantain', price:100},
+  {id:'soft_drink', name:'Soft Drinks', price:500},
+];
+
+const DRINKS = [
+  {id:'spirit', name:'Spirit', price:500},
+  {id:'fanta', name:'Fanta', price:500},
+  {id:'coke', name:'Coke', price:500},
+  {id:'water', name:'Water', price:250},
+];
+
+// ⚠️ Replace these with the cafeteria's real payment details
+const BANK = {
+  bank:'YOUR BANK NAME',
+  name:'Yellow Corner Cafeteria',
+  number:'0000000000'
+};
+
+const messagesEl = document.getElementById('messages');
+const cartCountEl = document.getElementById('cartCount');
+const input = document.getElementById('textInput');
+const checkoutBtn = document.getElementById('checkoutBtn');
+
+let cart = [];
+let stage = 'greet';
+let orderType = '';
+
+function setStage(name){
+  stage = name;
+  const submitting = (name === 'pickup' || name === 'delivery');
+  checkoutBtn.textContent = submitting ? 'Submit' : 'Checkout';
+  input.placeholder = name === 'delivery' ? 'Delivery address…' : 'Type a message…';
+}
+
+function esc(t){
+  return String(t).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function money(value){
+  return '₦' + Number(value).toLocaleString('en-NG');
+}
+
+function addMsg(text, who){
+  const d = document.createElement('div');
+  d.className = 'msg ' + who;
+  d.textContent = text;
+  messagesEl.appendChild(d);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+
+function addSystem(text){
+  const d = document.createElement('div');
+  d.className = 'msg system';
+  d.textContent = text;
+  messagesEl.appendChild(d);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+
+function addMenu(){
+  const label = document.createElement('div');
+  label.className = 'msg system';
+  label.style.alignSelf = 'flex-start';
+  label.style.fontWeight = '700';
+  label.style.color = '#5a4c33';
+  label.textContent = 'Our Menu — tap a food to add it to your order';
+  messagesEl.appendChild(label);
+
+  const grid = document.createElement('div');
+  grid.className = 'menu-grid';
+
+  MENU.forEach(item=>{
+    const btn = document.createElement('button');
+    btn.className = 'menu-card';
+    btn.innerHTML = '<b>'+item.name+'</b><span style="display:block;margin-top:4px;font-size:12px;color:#C0392B;font-weight:800;">'+money(item.price)+'</span>';
+    btn.onclick = ()=>{
+      if(item.id === 'soft_drink'){
+        showDrinks();
+      } else {
+        orderItem(item);
+      }
+    };
+    grid.appendChild(btn);
+  });
+
+  messagesEl.appendChild(grid);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+
+function showDrinks(){
+  addMsg('Soft Drinks', 'user');
+  setTimeout(()=>{
+    addMsg('Choose a drink:', 'bot');
+    const wrap = document.createElement('div');
+    wrap.className = 'chips';
+
+    DRINKS.forEach(drink=>{
+      const c = document.createElement('button');
+      c.className = 'chip';
+      c.textContent = drink.name + ' — ' + money(drink.price);
+      c.onclick = ()=>{
+        addMsg(drink.name, 'user');
+        orderItem(drink, true);
+      };
+      wrap.appendChild(c);
+    });
+
+    messagesEl.appendChild(wrap);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }, 250);
+}
+
+function addChips(labels, handler){
+  const wrap = document.createElement('div');
+  wrap.className = 'chips';
+  labels.forEach(l=>{
+    const c = document.createElement('button');
+    c.className = 'chip';
+    c.textContent = l;
+    c.onclick = ()=>handler(l);
+    wrap.appendChild(c);
+  });
+  messagesEl.appendChild(wrap);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+
+function findCartItem(id){
+  return cart.find(i=>i.id === id);
+}
+
+function getTotal(){
+  return cart.reduce((sum, item)=>sum + (item.price * item.qty), 0);
+}
+
+function updateCart(){
+  if(cart.length === 0){
+    cartCountEl.textContent = 'Your order: empty';
+    return;
+  }
+
+  const lines = cart.map(item=>{
+    const itemTotal = item.price * item.qty;
+    return item.name + ' x' + item.qty + ' — ' + money(itemTotal);
+  });
+
+  cartCountEl.textContent = 'Your order: ' + lines.join('  |  ') + '  •  Total: ' + money(getTotal());
+}
+
+function orderItem(item, fromDrink=false){
+  let existing = findCartItem(item.id);
+
+  if(existing){
+    existing.qty += 1;
+  } else {
+    cart.push({...item, qty:1});
+  }
+
+  if(!fromDrink){
+    addMsg(item.name + ' — ' + money(item.price), 'user');
+  }
+
+  setStage('shop');
+  updateCart();
+
+  setTimeout(()=>{
+    const current = findCartItem(item.id);
+    addMsg(
+      current.name + ' added. Quantity: ' + current.qty +
+      ' — ' + money(current.price * current.qty) +
+      '. Your total is ' + money(getTotal()) + '.',
+      'bot'
+    );
+    showActions(item);
+  }, 300);
+}
+
+function showActions(item){
+  addChips(['Add more', 'Clear'], (choice)=>{
+    if(choice === 'Add more'){
+      addMsg('Add more', 'user');
+      setTimeout(()=>{
+        addMsg("Tap another food to add it. Tap the same food again if you want another portion.", 'bot');
+        addMenu();
+      }, 250);
+    } else {
+      addMsg('Clear', 'user');
+      setTimeout(()=>clearOne(item), 250);
+    }
+  });
+}
+
+function clearOne(item){
+  const current = findCartItem(item.id);
+
+  if(!current){
+    addMsg(item.name + ' is not in your order.', 'bot');
+    addChips(['Add more'], ()=>{
+      addMsg('Add more', 'user');
+      setTimeout(addMenu, 250);
+    });
+    return;
+  }
+
+  current.qty -= 1;
+
+  if(current.qty <= 0){
+    cart = cart.filter(i=>i.id !== item.id);
+    updateCart();
+    addMsg(item.name + ' removed. Your total is ' + money(getTotal()) + '.', 'bot');
+    addChips(['Add more'], ()=>{
+      addMsg('Add more', 'user');
+      setTimeout(()=>{
+        addMsg('Tap a food to add it to your order.', 'bot');
+        addMenu();
+      }, 250);
+    });
+    return;
+  }
+
+  updateCart();
+  addMsg(
+    item.name + ' reduced. Quantity: ' + current.qty +
+    ' — ' + money(current.price * current.qty) +
+    '. Your total is ' + money(getTotal()) + '.',
+    'bot'
+  );
+  showActions(item);
+}
+
+function checkout(){
+  if(cart.length === 0){
+    addMsg("Your order is empty — pick something from the menu first!", 'bot');
+    addMenu();
+    return;
+  }
+
+  let summary = 'Your order:\n';
+  cart.forEach(item=>{
+    summary += '• ' + item.name + ' x' + item.qty + ' — ' + money(item.price * item.qty) + '\n';
+  });
+  summary += '\nTotal: ' + money(getTotal());
+  addMsg(summary.trim(), 'bot');
+
+  setTimeout(()=>{
+    addMsg('Is this for pickup or delivery?', 'bot');
+    addChips(['Pickup', 'Delivery'], (choice)=>{
+      if(cart.length === 0){
+        addMsg('Your order is empty — add something first.', 'bot');
+        return;
+      }
+      addMsg(choice, 'user');
+      orderType = choice;
+      setTimeout(()=>{
+        if(choice === 'Pickup'){
+          setStage('pickup');
+          addMsg('Pickup it is. Tap Submit to get your receipt and payment details.', 'bot');
+        } else {
+          setStage('delivery');
+          addMsg('Type your delivery address, then tap Submit.', 'bot');
+          input.focus();
+        }
+      }, 300);
+    });
+  }, 450);
+}
+
+function showReceipt(address){
+  const now = new Date();
+  const ref = 'YC-' + String(now.getMonth()+1).padStart(2,'0') + String(now.getDate()).padStart(2,'0') + '-' + Math.floor(1000 + Math.random()*9000);
+  const rows = cart.map(i=>
+    '<div class="r-row"><span>' + esc(i.name) + ' x' + i.qty + '</span><span>' + money(i.price*i.qty) + '</span></div>'
+  ).join('');
+
+  const card = document.createElement('div');
+  card.className = 'receipt';
+  card.innerHTML =
+    '<h3>Yellow Corner Cafeteria</h3>' +
+    '<div class="r-sub">Receipt ' + ref + '<br>' + now.toLocaleString('en-NG',{dateStyle:'medium',timeStyle:'short'}) + '</div>' +
+    '<div class="r-line"></div>' + rows + '<div class="r-line"></div>' +
+    '<div class="r-row r-total"><span>Total</span><span>' + money(getTotal()) + '</span></div>' +
+    '<div class="r-line"></div>' +
+    '<div class="r-row"><span>Order type</span><span>' + orderType + '</span></div>' +
+    (address ? '<div class="r-row"><span>Deliver to</span><span class="r-addr">' + esc(address) + '</span></div>' : '') +
+    '<div class="r-line"></div>' +
+    '<div class="r-pay"><b>Pay to</b><br>' + esc(BANK.bank) + '<br>' + esc(BANK.name) +
+    '<div class="r-acct" id="acct-' + ref + '">' + esc(BANK.number) + '</div>' +
+    'Use ' + ref + ' as your payment reference.</div>';
+  messagesEl.appendChild(card);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+
+  addChips(['Copy account number'], (l)=>{
+    try{ navigator.clipboard.writeText(BANK.number); addSystem('Account number copied'); }
+    catch(e){ addSystem('Copy failed — account number: ' + BANK.number); }
+  });
+}
+
+function submitOrder(){
+  if(cart.length === 0){
+    addMsg('Your order is empty — pick something from the menu first!', 'bot');
+    addMenu();
+    return;
+  }
+
+  let address = '';
+  if(stage === 'delivery'){
+    address = input.value.trim();
+    if(!address){
+      addMsg('Type your delivery address first, then tap Submit.', 'bot');
+      return;
+    }
+    input.value = '';
+    addMsg(address, 'user');
+  } else {
+    addMsg('Submit', 'user');
+  }
+
+  setTimeout(()=>{
+    addMsg('Order received. Here is your receipt — please pay to the account below.', 'bot');
+    showReceipt(address);
+    addSystem(orderType === 'Delivery' ? 'Delivery starts once payment is confirmed' : 'Pick up your order once payment is confirmed');
+    cart = [];
+    updateCart();
+    setStage('done');
+  }, 400);
+}
+
+function handleFreeText(text){
+  addMsg(text, 'user');
+  setTimeout(()=>{
+    if(stage === 'pickup'){
+      addMsg('Tap Submit to get your receipt and payment details.', 'bot');
+      return;
+    }
+    addMsg("I've got rice, spaghetti, beans, yam, bread, drinks and more. Tap an item below to order 👇", 'bot');
+    addMenu();
+  }, 450);
+}
+
+function submitText(){
+  if(stage === 'delivery'){ submitOrder(); return true; }
+  const val = input.value.trim();
+  if(!val) return false;
+  input.value = '';
+  handleFreeText(val);
+  return true;
+}
+
+checkoutBtn.onclick = ()=>{
+  if(stage === 'pickup' || stage === 'delivery'){
+    submitOrder();
+    return;
+  }
+  addMsg('Checkout', 'user');
+  setTimeout(checkout, 350);
+};
+
+input.addEventListener('keydown', e=>{
+  if(e.key==='Enter'){ submitText(); }
+});
+
+document.getElementById('startBtn').onclick = ()=>{
+  document.getElementById('splash').style.display = 'none';
+  document.getElementById('chatWindow').style.display = 'flex';
+  runOpeningSequence();
+};
+
+function runOpeningSequence(){
+  setTimeout(()=>addMsg('Welcome to Yellow Corner Cafeteria! 👋', 'bot'), 200);
+  setTimeout(()=>addMsg("I'm here to help you order. What are you craving today?", 'bot'), 900);
+  setTimeout(()=>addMenu(), 1300);
+}
+
+</script>
+
+</body>
+</html>
